@@ -169,9 +169,27 @@ def run_retraining(epochs: int = 3, resplit_data: bool = True) -> Dict:
     candidate.save(candidate_path)
 
     y_true, y_pred, y_pred_probs = pred.evaluate_on_test_set(TEST_DIR, model=candidate)
-    from sklearn.metrics import accuracy_score
+    from sklearn.metrics import accuracy_score, classification_report, confusion_matrix, roc_auc_score
+    import numpy as np
+
     candidate_test_acc = float(accuracy_score(y_true, y_pred))
     log["candidate_test_accuracy"] = candidate_test_acc
+
+    y_true_onehot = np.eye(len(pp.CLASSES))[y_true]
+    per_class_auc = {
+        c: float(roc_auc_score(y_true_onehot[:, i], y_pred_probs[:, i]))
+        for i, c in enumerate(pp.CLASSES)
+    }
+    macro_auc = float(roc_auc_score(y_true_onehot, y_pred_probs, average="macro", multi_class="ovr"))
+    full_metrics = {
+        "classification_report_text": classification_report(y_true, y_pred, target_names=pp.CLASSES, digits=3),
+        "classification_report_dict": classification_report(y_true, y_pred, target_names=pp.CLASSES, output_dict=True),
+        "confusion_matrix": confusion_matrix(y_true, y_pred).tolist(),
+        "roc_auc": per_class_auc,
+        "macro_auc": macro_auc,
+        "test_accuracy": candidate_test_acc,
+        "classes": pp.CLASSES,
+    }
 
     previous_test_acc = None
     if METRICS_PATH.exists():
@@ -183,10 +201,8 @@ def run_retraining(epochs: int = 3, resplit_data: bool = True) -> Dict:
 
     if promoted:
         shutil.copy(candidate_path, prod_model_path)
-        METRICS_PATH.write_text(json.dumps({
-            "test_accuracy": candidate_test_acc,
-            "retrained_at": time.time(),
-        }, indent=2))
+        full_metrics["retrained_at"] = time.time()
+        METRICS_PATH.write_text(json.dumps(full_metrics, indent=2))
         pred.clear_model_cache()  # so the API's next /predict call reloads the new weights
 
     state = load_state()
