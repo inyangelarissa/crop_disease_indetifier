@@ -135,6 +135,7 @@ def run_retraining(epochs: int = 3, resplit_data: bool = True) -> Dict:
     """
     t0 = time.time()
     log = {"started_at": time.time(), "epochs": epochs}
+    pred.clear_model_cache()
 
     if resplit_data:
         for d in (TRAIN_DIR, VAL_DIR, TEST_DIR):
