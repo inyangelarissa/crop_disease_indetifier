@@ -16,6 +16,7 @@ RUN pip install --no-cache-dir -r requirements.txt
 # Application code
 COPY src/ ./src/
 COPY api/ ./api/
+COPY ui/ ./ui/
 
 # Trained model + current production metrics — bundled into the image so a
 # fresh deploy serves real predictions immediately, without needing a
