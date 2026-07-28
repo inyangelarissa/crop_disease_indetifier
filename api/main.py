@@ -1,17 +1,3 @@
-"""
-main.py
-Maize Leaf Disease Classifier — Andiza ML Extension — FastAPI service
-
-Wraps src/prediction.py and src/retrain.py behind HTTP endpoints. This is
-what gets Dockerized and deployed to Render in Phase 8, and what the UI
-(Phase 7) calls for uptime, visualizations, predict, upload, and retrain.
-
-Run locally:
-    uvicorn api.main:app --reload --port 8000
-Docs (auto-generated):
-    http://localhost:8000/docs
-"""
-
 import json
 import pathlib
 import shutil
@@ -22,7 +8,7 @@ from typing import List
 
 from fastapi import FastAPI, File, HTTPException, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, HTMLResponse
 
 PROJECT_ROOT = pathlib.Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(PROJECT_ROOT / "src"))
@@ -41,12 +27,11 @@ APP_START_TIME = time.time()
 
 app = FastAPI(
     title="Maize Leaf Disease Classifier API",
-    description="Andiza ML Extension — predict, monitor, and retrain a maize leaf disease classifier.",
+    description="Predict, monitor, and retrain a maize leaf disease classifier.",
     version="1.0.0",
 )
 
-# Wide-open CORS for the demo UI (Phase 7). Tighten to specific origins before
-# a real production launch.
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=["*"],
@@ -181,15 +166,14 @@ def training_history():
     return json.loads(log_path.read_text())
 
 
-@app.get("/")
+@app.get("/", response_class=HTMLResponse)
 def root():
-    return {
-        "service": "Maize Leaf Disease Classifier API",
-        "docs": "/docs",
-        "endpoints": [
-            "/health", "/model-info", "/predict (POST)",
-            "/upload-retrain-data (POST)", "/retrain (POST)",
-            "/retrain/trigger-status", "/visualizations/class-distribution",
-            "/visualizations/training-history",
-        ],
-    }
+    html_path = PROJECT_ROOT / "ui" / "index.html"
+
+    if not html_path.exists():
+        raise HTTPException(
+            status_code=404,
+            detail="UI file not found"
+        )
+
+    return html_path.read_text(encoding="utf-8")

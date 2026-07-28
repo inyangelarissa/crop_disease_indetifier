@@ -1,0 +1,83 @@
+{
+  "classification_report_text": "                           precision    recall  f1-score   support\n\nCercospora_Gray_Leaf_Spot      0.872     0.782     0.824        87\n              Common_Rust      0.994     0.994     0.994       179\n                  Healthy      1.000     1.000     1.000       175\n     Northern_Leaf_Blight      0.892     0.943     0.916       157\n\n                 accuracy                          0.952       598\n                macro avg      0.939     0.930     0.934       598\n             weighted avg      0.951     0.952     0.951       598\n",
+  "classification_report_dict": {
+    "Cercospora_Gray_Leaf_Spot": {
+      "precision": 0.8717948717948718,
+      "recall": 0.7816091954022989,
+      "f1-score": 0.8242424242424242,
+      "support": 87.0
+    },
+    "Common_Rust": {
+      "precision": 0.994413407821229,
+      "recall": 0.994413407821229,
+      "f1-score": 0.994413407821229,
+      "support": 179.0
+    },
+    "Healthy": {
+      "precision": 1.0,
+      "recall": 1.0,
+      "f1-score": 1.0,
+      "support": 175.0
+    },
+    "Northern_Leaf_Blight": {
+      "precision": 0.891566265060241,
+      "recall": 0.9426751592356688,
+      "f1-score": 0.9164086687306502,
+      "support": 157.0
+    },
+    "accuracy": 0.9515050167224081,
+    "macro avg": {
+      "precision": 0.9394436361690854,
+      "recall": 0.9296744406147992,
+      "f1-score": 0.9337661251985758,
+      "support": 598.0
+    },
+    "weighted avg": {
+      "precision": 0.951207453947511,
+      "recall": 0.9515050167224081,
+      "f1-score": 0.9508114580264264,
+      "support": 598.0
+    }
+  },
+  "confusion_matrix": [
+    [
+      68,
+      1,
+      0,
+      18
+    ],
+    [
+      1,
+      178,
+      0,
+      0
+    ],
+    [
+      0,
+      0,
+      175,
+      0
+    ],
+    [
+      9,
+      0,
+      0,
+      148
+    ]
+  ],
+  "roc_auc": {
+    "Cercospora_Gray_Leaf_Spot": 0.9851766875857569,
+    "Common_Rust": 0.9992400101331982,
+    "Healthy": 1.0,
+    "Northern_Leaf_Blight": 0.9937461184048991
+  },
+  "macro_auc": 0.9945407040309635,
+  "test_accuracy": 0.9515050167224081,
+  "classes": [
+    "Cercospora_Gray_Leaf_Spot",
+    "Common_Rust",
+    "Healthy",
+    "Northern_Leaf_Blight"
+  ],
+  "retrained_at": 1785047757.7492313
+}

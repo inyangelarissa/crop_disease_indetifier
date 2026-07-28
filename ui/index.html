@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Maize Scout — Maize Field Diagnostics Console Center</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #191d13;
+    --bg-grain: #1e2317;
+    --panel: #242a1b;
+    --panel-alt: #2b3220;
+    --border: #3a4130;
+    --border-soft: #333a27;
+    --gold: #d4a017;
+    --gold-soft: #e8c158;
+    --rust: #b45535;
+    --rust-soft: #d97a56;
+    --leaf: #7fa35c;
+    --leaf-soft: #9cc47a;
+    --text: #ede8d6;
+    --text-muted: #a39c85;
+    --text-dim: #746e5c;
+  }
+
+  *{ box-sizing: border-box; }
+
+  html, body{
+    margin:0; padding:0;
+    background: var(--bg);
+    background-image:
+      radial-gradient(circle at 15% 8%, rgba(212,160,23,0.06), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(127,163,92,0.05), transparent 45%);
+    color: var(--text);
+    font-family: 'IBM Plex Sans', sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  ::selection{ background: var(--gold); color: #1a1a10; }
+
+  a{ color: var(--gold-soft); }
+
+  .wrap{ max-width: 1180px; margin: 0 auto; padding: 28px 24px 80px; }
+
+  /* ---------- Header ---------- */
+  header{
+    display:flex; align-items:flex-end; justify-content:space-between;
+    flex-wrap: wrap; gap: 18px;
+    padding-bottom: 22px; margin-bottom: 26px;
+    border-bottom: 1px solid var(--border);
+  }
+  .brand{ display:flex; align-items:center; gap: 14px; }
+  .brand-mark{
+    width: 44px; height: 44px; border-radius: 10px;
+    background: linear-gradient(160deg, var(--leaf), #5c7a3f);
+    display:flex; align-items:center; justify-content:center;
+    font-size: 22px; flex-shrink:0;
+    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+  }
+  h1{
+    font-family:'Fraunces', serif; font-weight:600; font-size: 26px;
+    margin:0; letter-spacing: 0.2px;
+  }
+  .brand-sub{
+    font-size: 12.5px; color: var(--text-muted); margin-top: 2px;
+    letter-spacing: 0.4px; text-transform: uppercase;
+  }
+
+  .connect-row{ display:flex; align-items:center; gap:10px; }
+  .connect-row input{
+    background: var(--panel); border:1px solid var(--border); color: var(--text);
+    font-family:'IBM Plex Mono', monospace; font-size: 12.5px;
+    padding: 8px 10px; border-radius: 6px; width: 220px;
+  }
+  .connect-row input:focus{ outline:none; border-color: var(--gold); }
+  .btn{
+    font-family:'IBM Plex Sans', sans-serif; font-weight:600; font-size: 13px;
+    padding: 8px 16px; border-radius: 6px; border:1px solid transparent;
+    cursor:pointer; transition: transform .12s ease, filter .12s ease;
+  }
+  .btn:active{ transform: translateY(1px); }
+  .btn-gold{ background: var(--gold); color: #1e1a0a; }
+  .btn-gold:hover{ filter:brightness(1.08); }
+  .btn-ghost{ background: transparent; border-color: var(--border); color: var(--text); }
+  .btn-ghost:hover{ border-color: var(--gold); color: var(--gold-soft); }
+  .btn:disabled{ opacity:0.45; cursor:not-allowed; }
+
+  .status-pill{
+    display:inline-flex; align-items:center; gap:7px;
+    font-family:'IBM Plex Mono', monospace; font-size: 12px;
+    padding: 6px 12px; border-radius: 100px; border:1px solid var(--border);
+    background: var(--panel);
+  }
+  .dot{ width:8px; height:8px; border-radius:50%; background: var(--text-dim); }
+  .dot.ok{ background: var(--leaf-soft); box-shadow: 0 0 8px var(--leaf-soft); }
+  .dot.bad{ background: var(--rust-soft); box-shadow: 0 0 8px var(--rust-soft); }
+  .dot.pending{ background: var(--gold-soft); animation: pulse 1.2s infinite; }
+  @keyframes pulse{ 0%,100%{opacity:1} 50%{opacity:0.35} }
+
+  /* ---------- Layout ---------- */
+  .grid{
+    display:grid;
+    grid-template-columns: 1.05fr 1.35fr;
+    gap: 22px;
+  }
+  @media (max-width: 880px){ .grid{ grid-template-columns: 1fr; } }
+
+  .panel{
+    background: var(--panel);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    padding: 22px;
+    margin-bottom: 22px;
+  }
+  .panel h2{
+    font-family:'Fraunces', serif; font-weight:600; font-size: 17px;
+    margin: 0 0 4px;
+  }
+  .panel .desc{ font-size: 12.5px; color: var(--text-muted); margin: 0 0 18px; }
+  .eyebrow{
+    font-family:'IBM Plex Mono', monospace; font-size: 10.5px; letter-spacing: 1.5px;
+    text-transform: uppercase; color: var(--gold-soft); margin-bottom: 6px; display:block;
+  }
+
+  /* ---------- Gauge (signature element) ---------- */
+  .gauge-row{ display:flex; align-items:center; gap: 22px; flex-wrap:wrap; }
+  .gauge-wrap{ position: relative; width: 148px; height: 148px; flex-shrink:0; }
+  .gauge-num{
+    position:absolute; inset:0; display:flex; flex-direction:column;
+    align-items:center; justify-content:center;
+  }
+  .gauge-num .val{ font-family:'IBM Plex Mono', monospace; font-size: 26px; font-weight:600; color: var(--gold-soft); }
+  .gauge-num .lbl{ font-size: 10px; color: var(--text-dim); text-transform:uppercase; letter-spacing:1px; margin-top:2px; }
+
+  .stat-list{ display:flex; flex-direction:column; gap: 10px; flex:1; min-width: 180px; }
+  .stat{ display:flex; justify-content:space-between; font-size:13px; border-bottom:1px dashed var(--border-soft); padding-bottom:8px; }
+  .stat span:first-child{ color: var(--text-muted); }
+  .stat span:last-child{ font-family:'IBM Plex Mono', monospace; color: var(--text); }
+
+  /* per-class bars */
+  .classbar{ margin-bottom: 12px; }
+  .classbar-top{ display:flex; justify-content:space-between; font-size:12.5px; margin-bottom:5px; }
+  .classbar-top .cname{ color: var(--text); }
+  .classbar-top .cval{ font-family:'IBM Plex Mono', monospace; color: var(--text-muted); }
+  .classbar-track{ height:7px; background: var(--panel-alt); border-radius:5px; overflow:hidden; }
+  .classbar-fill{ height:100%; border-radius:5px; background: linear-gradient(90deg, var(--leaf), var(--gold)); transition: width .6s ease; }
+
+  /* ---------- Predict panel ---------- */
+  .dropzone{
+    border: 1.5px dashed var(--border);
+    border-radius: 10px;
+    padding: 26px;
+    text-align:center;
+    cursor:pointer;
+    transition: border-color .15s ease, background .15s ease;
+    background: var(--panel-alt);
+  }
+  .dropzone.drag{ border-color: var(--gold); background: rgba(212,160,23,0.06); }
+  .dropzone svg{ opacity:0.6; margin-bottom: 8px; }
+  .dropzone p{ margin:4px 0; font-size:13px; color: var(--text-muted); }
+  .dropzone .hint{ font-size: 11.5px; color: var(--text-dim); }
+  #predictFile{ display:none; }
+
+  .predict-result{ margin-top:18px; display:none; }
+  .predict-result.show{ display:block; }
+  .predict-preview{ display:flex; gap:16px; align-items:flex-start; margin-bottom: 14px; }
+  .predict-preview img{ width:88px; height:88px; object-fit:cover; border-radius:8px; border:1px solid var(--border); }
+  .predict-headline .cls{
+    font-family:'Fraunces', serif; font-size: 20px; font-weight:600;
+  }
+  .predict-headline .conf{ font-family:'IBM Plex Mono', monospace; font-size:12.5px; color: var(--text-muted); margin-top:2px; }
+  .tag{
+    display:inline-block; font-size: 10.5px; font-family:'IBM Plex Mono', monospace;
+    padding: 3px 9px; border-radius: 100px; margin-top:6px; text-transform:uppercase; letter-spacing:0.5px;
+  }
+  .tag.healthy{ background: rgba(127,163,92,0.18); color: var(--leaf-soft); }
+  .tag.disease{ background: rgba(180,85,53,0.18); color: var(--rust-soft); }
+
+  /* ---------- Upload / retrain ---------- */
+  .field-row{ display:flex; gap:10px; margin-bottom: 14px; flex-wrap:wrap; }
+  select, .file-btn{
+    background: var(--panel-alt); border:1px solid var(--border); color:var(--text);
+    font-family:'IBM Plex Sans', sans-serif; font-size:13px; padding: 9px 12px; border-radius:6px;
+  }
+  select{ flex:1; min-width: 160px; }
+  #bulkFile{ display:none; }
+
+  .trigger-banner{
+    display:flex; align-items:center; justify-content:space-between;
+    padding: 12px 14px; border-radius: 8px; margin-bottom: 14px;
+    background: var(--panel-alt); border:1px solid var(--border);
+    font-size: 12.5px; gap: 12px; flex-wrap:wrap;
+  }
+  .trigger-banner.due{ border-color: var(--gold); background: rgba(212,160,23,0.08); }
+
+  .console{
+    background: #12150d; border:1px solid var(--border); border-radius:8px;
+    padding: 12px 14px; font-family:'IBM Plex Mono', monospace; font-size: 12px;
+    color: var(--leaf-soft); height: 150px; overflow-y:auto; white-space:pre-wrap;
+    line-height: 1.55;
+  }
+  .console .err{ color: var(--rust-soft); }
+  .console .muted{ color: var(--text-dim); }
+
+  /* ---------- Distribution chart ---------- */
+  .dist-row{ display:flex; align-items:center; gap:12px; margin-bottom:10px; }
+  .dist-label{ width: 150px; font-size:12.5px; color: var(--text-muted); flex-shrink:0; }
+  .dist-track{ flex:1; height: 20px; background: var(--panel-alt); border-radius:4px; overflow:hidden; }
+  .dist-fill{ height:100%; background: linear-gradient(90deg, #5c7a3f, var(--gold)); border-radius:4px; transition: width .8s ease; }
+  .dist-count{ width: 46px; text-align:right; font-family:'IBM Plex Mono', monospace; font-size:12px; color: var(--text-dim); }
+
+  .empty-note{ font-size:12.5px; color: var(--text-dim); font-style:italic; }
+  .full-span{ grid-column: 1 / -1; }
+
+  footer{ text-align:center; font-size:11.5px; color: var(--text-dim); margin-top: 20px; }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="brand">
+      <div class="brand-mark">🌽</div>
+      <div>
+        <h1>Maize Scout</h1>
+        <div class="brand-sub">Andiza Field Diagnostics Console</div>
+      </div>
+    </div>
+    <div class="connect-row">
+      <span class="status-pill"><span class="dot pending" id="connDot"></span><span id="connLabel">connecting…</span></span>
+      <input id="apiBase" type="text" value="http://localhost:8000" spellcheck="false">
+      <button class="btn btn-gold" onclick="connect()">Connect</button>
+    </div>
+  </header>
+
+  <div class="grid">
+    <!-- LEFT COLUMN -->
+    <div>
+      <div class="panel">
+        <span class="eyebrow">Model Health</span>
+        <h2>Production Reading</h2>
+        <p class="desc">Live status of the deployed classifier, pulled straight from <code>/health</code> and <code>/model-info</code>.</p>
+
+        <div class="gauge-row">
+          <div class="gauge-wrap">
+            <svg width="148" height="148" viewBox="0 0 148 148">
+              <circle cx="74" cy="74" r="62" fill="none" stroke="#333a27" stroke-width="10"/>
+              <circle id="gaugeArc" cx="74" cy="74" r="62" fill="none" stroke="url(#gaugeGrad)"
+                      stroke-width="10" stroke-linecap="round"
+                      stroke-dasharray="389.6" stroke-dashoffset="389.6"
+                      transform="rotate(-90 74 74)" style="transition: stroke-dashoffset 1s ease"/>
+              <defs>
+                <linearGradient id="gaugeGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stop-color="#7fa35c"/>
+                  <stop offset="100%" stop-color="#d4a017"/>
+                </linearGradient>
+              </defs>
+            </svg>
+            <div class="gauge-num">
+              <div class="val" id="gaugeVal">—</div>
+              <div class="lbl">test acc.</div>
+            </div>
+          </div>
+          <div class="stat-list">
+            <div class="stat"><span>Uptime</span><span id="statUptime">—</span></div>
+            <div class="stat"><span>Macro ROC-AUC</span><span id="statAuc">—</span></div>
+            <div class="stat"><span>Last retrained</span><span id="statRetrained">—</span></div>
+            <div class="stat"><span>Model file</span><span id="statModelFile">—</span></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <span class="eyebrow">Per-Class Performance</span>
+        <h2>F1 by Disease</h2>
+        <p class="desc">Where the classifier is confident, and where it still needs more field data.</p>
+        <div id="classBars"><p class="empty-note">Connect to the API to load metrics.</p></div>
+      </div>
+
+      <div class="panel">
+        <span class="eyebrow">Dataset</span>
+        <h2>Class Distribution</h2>
+        <p class="desc">Images currently in <code>data/raw</code>, by disease.</p>
+        <div id="distChart"><p class="empty-note">Connect to the API to load dataset stats.</p></div>
+      </div>
+    </div>
+
+    <!-- RIGHT COLUMN -->
+    <div>
+      <div class="panel">
+        <span class="eyebrow">Diagnose</span>
+        <h2>Scan a Leaf</h2>
+        <p class="desc">Upload one photo of a maize leaf for an instant reading.</p>
+
+        <div class="dropzone" id="dropzone" onclick="document.getElementById('predictFile').click()">
+          <svg width="30" height="30" viewBox="0 0 24 24" fill="none" stroke="#a39c85" stroke-width="1.6"><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M12 3v12m0 0l-4-4m4 4l4-4"/></svg>
+          <p>Drop a leaf photo here, or click to choose one</p>
+          <p class="hint">JPG or PNG</p>
+        </div>
+        <input type="file" id="predictFile" accept="image/jpeg,image/png">
+
+        <div class="predict-result" id="predictResult">
+          <div class="predict-preview">
+            <img id="predictThumb" src="" alt="">
+            <div class="predict-headline">
+              <div class="cls" id="predictClass">—</div>
+              <div class="conf" id="predictConf">—</div>
+              <div class="tag" id="predictTag"></div>
+            </div>
+          </div>
+          <div id="predictProbs"></div>
+        </div>
+      </div>
+
+      <div class="panel">
+        <span class="eyebrow">Grow The Dataset</span>
+        <h2>Bulk Upload &amp; Retrain</h2>
+        <p class="desc">Add newly labeled field photos, then retrain when enough have accumulated.</p>
+
+        <div class="field-row">
+          <select id="uploadClass">
+            <option value="Healthy">Healthy</option>
+            <option value="Common_Rust">Common Rust</option>
+            <option value="Northern_Leaf_Blight">Northern Leaf Blight</option>
+            <option value="Cercospora_Gray_Leaf_Spot">Cercospora Gray Leaf Spot</option>
+          </select>
+          <button class="btn btn-ghost" onclick="document.getElementById('bulkFile').click()">Choose photos</button>
+          <button class="btn btn-gold" id="uploadBtn" onclick="uploadBulk()" disabled>Upload</button>
+          <input type="file" id="bulkFile" accept="image/jpeg,image/png" multiple onchange="onBulkChosen()">
+        </div>
+        <p class="hint" id="bulkChosenLabel" style="margin: -6px 0 14px; color: var(--text-dim); font-size: 11.5px;"></p>
+
+        <div class="trigger-banner" id="triggerBanner">
+          <span id="triggerText">Checking retrain trigger…</span>
+          <button class="btn btn-gold" id="retrainBtn" onclick="runRetrain()">Retrain now</button>
+        </div>
+
+        <div class="console" id="consoleLog">connect to the api to begin…</div>
+      </div>
+    </div>
+  </div>
+
+  <footer>Maize Scout — a maize leaf disease classifier · built by Inyange Larissa</footer>
+</div>
+
+<script>
+let API_BASE = document.getElementById('apiBase').value.replace(/\/$/, '');
+let bulkFiles = [];
+const CLASSES = ["Cercospora_Gray_Leaf_Spot", "Common_Rust", "Healthy", "Northern_Leaf_Blight"];
+const SHORT = {
+  "Cercospora_Gray_Leaf_Spot": "Cercospora Gray Leaf Spot",
+  "Common_Rust": "Common Rust",
+  "Healthy": "Healthy",
+  "Northern_Leaf_Blight": "Northern Leaf Blight"
+};
+
+function logLine(msg, cls){
+  const el = document.getElementById('consoleLog');
+  const line = document.createElement('div');
+  if (cls) line.className = cls;
+  const t = new Date().toLocaleTimeString();
+  line.textContent = `[${t}] ${msg}`;
+  el.appendChild(line);
+  el.scrollTop = el.scrollHeight;
+}
+
+function setConn(state, label){
+  const dot = document.getElementById('connDot');
+  dot.className = 'dot ' + state;
+  document.getElementById('connLabel').textContent = label;
+}
+
+async function connect(){
+  API_BASE = document.getElementById('apiBase').value.replace(/\/$/, '');
+  setConn('pending', 'connecting…');
+  logLine(`connecting to ${API_BASE} …`);
+  try{
+    await refreshHealth();
+    await refreshModelInfo();
+    await refreshDistribution();
+    await refreshTrigger();
+    setConn('ok', 'connected');
+    logLine('connected. dashboard is live.');
+  }catch(e){
+    setConn('bad', 'offline');
+    logLine('could not reach the API — is it running at that URL? (' + e.message + ')', 'err');
+  }
+}
+
+async function refreshHealth(){
+  const r = await fetch(`${API_BASE}/health`);
+  if(!r.ok) throw new Error('health check failed');
+  const d = await r.json();
+  document.getElementById('statUptime').textContent = formatUptime(d.uptime_seconds);
+  document.getElementById('statModelFile').textContent = d.model_file_present ? 'present' : 'missing';
+}
+
+function formatUptime(s){
+  if (s < 60) return `${Math.round(s)}s`;
+  if (s < 3600) return `${Math.floor(s/60)}m ${Math.round(s%60)}s`;
+  return `${Math.floor(s/3600)}h ${Math.floor((s%3600)/60)}m`;
+}
+
+async function refreshModelInfo(){
+  const r = await fetch(`${API_BASE}/model-info`);
+  if(!r.ok) throw new Error('model-info failed');
+  const d = await r.json();
+
+  const acc = d.test_accuracy || 0;
+  document.getElementById('gaugeVal').textContent = (acc*100).toFixed(1) + '%';
+  const circumference = 389.6;
+  const offset = circumference * (1 - acc);
+  document.getElementById('gaugeArc').style.strokeDashoffset = offset;
+
+  document.getElementById('statAuc').textContent = d.macro_auc ? d.macro_auc.toFixed(4) : '—';
+  document.getElementById('statRetrained').textContent = d.retrained_at
+    ? new Date(d.retrained_at*1000).toLocaleString() : '—';
+
+  const report = d.classification_report || {};
+  const barsEl = document.getElementById('classBars');
+  barsEl.innerHTML = '';
+  CLASSES.forEach(c => {
+    const m = report[c];
+    if(!m) return;
+    const f1 = m['f1-score'];
+    const row = document.createElement('div');
+    row.className = 'classbar';
+    row.innerHTML = `
+      <div class="classbar-top"><span class="cname">${SHORT[c]}</span><span class="cval">F1 ${f1.toFixed(3)}</span></div>
+      <div class="classbar-track"><div class="classbar-fill" style="width:${(f1*100).toFixed(1)}%"></div></div>`;
+    barsEl.appendChild(row);
+  });
+}
+
+async function refreshDistribution(){
+  const r = await fetch(`${API_BASE}/visualizations/class-distribution`);
+  if(!r.ok) throw new Error('distribution failed');
+  const d = await r.json();
+  const max = Math.max(...Object.values(d), 1);
+  const el = document.getElementById('distChart');
+  el.innerHTML = '';
+  CLASSES.forEach(c => {
+    const n = d[c] || 0;
+    const row = document.createElement('div');
+    row.className = 'dist-row';
+    row.innerHTML = `
+      <div class="dist-label">${SHORT[c]}</div>
+      <div class="dist-track"><div class="dist-fill" style="width:${(n/max*100).toFixed(1)}%"></div></div>
+      <div class="dist-count">${n}</div>`;
+    el.appendChild(row);
+  });
+}
+
+async function refreshTrigger(){
+  const r = await fetch(`${API_BASE}/retrain/trigger-status`);
+  if(!r.ok) throw new Error('trigger-status failed');
+  const d = await r.json();
+  const banner = document.getElementById('triggerBanner');
+  const text = document.getElementById('triggerText');
+  banner.classList.toggle('due', d.should_retrain);
+  text.textContent = d.should_retrain
+    ? `Retrain recommended — ${d.new_images_since_last_retrain} new images since last retrain (threshold ${d.threshold}).`
+    : `${d.new_images_since_last_retrain} new images since last retrain (threshold ${d.threshold}). No retrain needed yet.`;
+}
+
+// ---- Predict ----
+const dropzone = document.getElementById('dropzone');
+const predictFile = document.getElementById('predictFile');
+predictFile.addEventListener('change', () => { if(predictFile.files[0]) doPredict(predictFile.files[0]); });
+['dragover','dragleave','drop'].forEach(evt => {
+  dropzone.addEventListener(evt, e => {
+    e.preventDefault();
+    dropzone.classList.toggle('drag', evt === 'dragover');
+    if(evt === 'drop' && e.dataTransfer.files[0]) doPredict(e.dataTransfer.files[0]);
+  });
+});
+
+async function doPredict(file){
+  logLine(`scanning ${file.name} …`);
+  const thumb = document.getElementById('predictThumb');
+  thumb.src = URL.createObjectURL(file);
+
+  const fd = new FormData();
+  fd.append('file', file);
+  try{
+    const r = await fetch(`${API_BASE}/predict`, { method:'POST', body: fd });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail || 'prediction failed');
+
+    document.getElementById('predictClass').textContent = SHORT[d.predicted_class] || d.predicted_class;
+    document.getElementById('predictConf').textContent = `${(d.confidence*100).toFixed(1)}% confidence`;
+    const tag = document.getElementById('predictTag');
+    const healthy = d.predicted_class === 'Healthy';
+    tag.textContent = healthy ? 'no disease detected' : 'disease detected';
+    tag.className = 'tag ' + (healthy ? 'healthy' : 'disease');
+
+    const probsEl = document.getElementById('predictProbs');
+    probsEl.innerHTML = '';
+    CLASSES.forEach(c => {
+      const p = d.class_probabilities[c] || 0;
+      const row = document.createElement('div');
+      row.className = 'classbar';
+      row.innerHTML = `
+        <div class="classbar-top"><span class="cname">${SHORT[c]}</span><span class="cval">${(p*100).toFixed(1)}%</span></div>
+        <div class="classbar-track"><div class="classbar-fill" style="width:${(p*100).toFixed(1)}%"></div></div>`;
+      probsEl.appendChild(row);
+    });
+
+    document.getElementById('predictResult').classList.add('show');
+    logLine(`result: ${d.predicted_class} (${(d.confidence*100).toFixed(1)}%)`);
+  }catch(e){
+    logLine('predict failed — ' + e.message, 'err');
+  }
+}
+
+// ---- Bulk upload ----
+function onBulkChosen(){
+  bulkFiles = Array.from(document.getElementById('bulkFile').files);
+  document.getElementById('bulkChosenLabel').textContent = bulkFiles.length
+    ? `${bulkFiles.length} photo(s) selected` : '';
+  document.getElementById('uploadBtn').disabled = bulkFiles.length === 0;
+}
+
+async function uploadBulk(){
+  const className = document.getElementById('uploadClass').value;
+  if(!bulkFiles.length) return;
+  logLine(`uploading ${bulkFiles.length} photo(s) as "${className}" …`);
+  const fd = new FormData();
+  bulkFiles.forEach(f => fd.append('files', f));
+  try{
+    const r = await fetch(`${API_BASE}/upload-retrain-data?class_name=${encodeURIComponent(className)}`, {
+      method:'POST', body: fd
+    });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail || 'upload failed');
+    logLine(`saved ${d.files_saved} photo(s) to data/incoming/${className}.`);
+    bulkFiles = [];
+    document.getElementById('bulkFile').value = '';
+    document.getElementById('bulkChosenLabel').textContent = '';
+    document.getElementById('uploadBtn').disabled = true;
+    await refreshTrigger();
+  }catch(e){
+    logLine('upload failed — ' + e.message, 'err');
+  }
+}
+
+// ---- Retrain ----
+async function runRetrain(){
+  const btn = document.getElementById('retrainBtn');
+  btn.disabled = true;
+  logLine('retraining started — this can take a minute or two…');
+  try{
+    const r = await fetch(`${API_BASE}/retrain`, { method:'POST' });
+    const d = await r.json();
+    if(!r.ok) throw new Error(d.detail || 'retrain failed');
+    logLine(`retrain complete. candidate test acc ${(d.candidate_test_accuracy*100).toFixed(1)}% ` +
+            `vs previous ${d.previous_test_accuracy ? (d.previous_test_accuracy*100).toFixed(1)+'%' : 'n/a'} — ` +
+            (d.promoted ? 'PROMOTED to production.' : 'kept existing model (not an improvement).'),
+            d.promoted ? '' : 'muted');
+    await refreshModelInfo();
+    await refreshTrigger();
+  }catch(e){
+    logLine('retrain failed — ' + e.message, 'err');
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+// Auto-connect on load
+connect();
+setInterval(() => { refreshHealth().catch(()=>{}); }, 15000);
+</script>
+</body>
+</html>

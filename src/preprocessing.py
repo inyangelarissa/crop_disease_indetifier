@@ -7,14 +7,12 @@ from sklearn.model_selection import train_test_split
 
 IMG_SIZE: Tuple[int, int] = (224, 224)
 CLASSES: List[str] = [
-    "Healthy",
-    "Common_Rust",
-    "Northern_Leaf_Blight",
     "Cercospora_Gray_Leaf_Spot",
+    "Common_Rust",
+    "Healthy",
+    "Northern_Leaf_Blight",
 ]
 
-# Augmentation pipeline — training time only. Mirrors the block explored in
-# notebook/maize_leaf_disease.ipynb, section 3.
 data_augmentation = tf.keras.Sequential(
     [
         tf.keras.layers.RandomFlip("horizontal"),

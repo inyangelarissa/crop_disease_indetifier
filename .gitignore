@@ -1,0 +1,25 @@
+# Data (large, regenerable from data/raw/ — see README.md)
+data/raw/
+data/train/
+data/val/
+data/test/
+data/incoming/
+
+# Runtime artifacts
+tmp_uploads/
+models/candidate_model.keras
+models/*checkpoint*.keras
+models/retrain_log.json
+*.pyc
+__pycache__/
+.ipynb_checkpoints/
+
+# Environments
+venv/
+.venv/
+env/
+
+# OS/editor
+.DS_Store
+.vscode/
+*.swp

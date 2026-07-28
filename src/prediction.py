@@ -1,12 +1,3 @@
-"""
-prediction.py
-Maize Leaf Disease Classifier — Andiza ML Extension
-
-Inference utilities. Used by:
-- notebook/maize_leaf_disease.ipynb (Phase 4 evaluation, single-prediction demo)
-- the FastAPI /predict endpoint (Phase 6)
-"""
-
 import pathlib
 from typing import Dict, List, Union
 
