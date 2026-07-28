@@ -569,6 +569,11 @@ async function runRetrain(){
 }
 
 // Auto-connect on load
+// If this page is being served BY the API itself (like on Render), auto-fill
+// the API field with the page's own address instead of localhost.
+if (window.location.protocol !== 'file:') {
+  document.getElementById('apiBase').value = window.location.origin;
+}
 connect();
 setInterval(() => { refreshHealth().catch(()=>{}); }, 15000);
 </script>
