@@ -12,7 +12,6 @@ tmp_uploads/
 models/candidate_model.keras
 models/*checkpoint*
 models/retrain_log.json
-ui/
 *.md
 .venv/
 venv/
