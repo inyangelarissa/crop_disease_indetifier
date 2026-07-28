@@ -143,8 +143,8 @@ def run_retraining(epochs: int = 3, resplit_data: bool = True) -> Dict:
         split_summary = pp.split_raw_dataset(RAW_DIR, TRAIN_DIR, VAL_DIR, TEST_DIR)
         log["data_split"] = split_summary
 
-    train_ds = pp.make_dataset(TRAIN_DIR, shuffle=True, batch_size=32)
-    val_ds = pp.make_dataset(VAL_DIR, shuffle=False, batch_size=32)
+    train_ds = pp.make_dataset(TRAIN_DIR, shuffle=True, batch_size=8)
+    val_ds = pp.make_dataset(VAL_DIR, shuffle=False, batch_size=8)
     class_weights = pp.compute_class_weights(RAW_DIR, pp.CLASSES)
 
     prod_model_path = MODELS_DIR / "best_model.keras"
