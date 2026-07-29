@@ -26,6 +26,7 @@ def load_model(model_path: Union[str, pathlib.Path] = DEFAULT_MODEL_PATH) -> tf.
 def clear_model_cache() -> None:
     """Call after retraining swaps in a new model file at the same path."""
     _model_cache.clear()
+    tf.keras.backend.clear_session()
 
 
 def predict_single(
