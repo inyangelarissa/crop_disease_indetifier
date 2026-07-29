@@ -27,6 +27,8 @@ def clear_model_cache() -> None:
     """Call after retraining swaps in a new model file at the same path."""
     _model_cache.clear()
     tf.keras.backend.clear_session()
+    import gc
+    gc.collect()
 
 
 def predict_single(

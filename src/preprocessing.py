@@ -1,10 +1,29 @@
+"""
+preprocessing.py
+Maize Leaf Disease Classifier — Andiza ML Extension
+
+Reusable preprocessing utilities shared by the training notebook, the API's
+prediction endpoint, and the retraining trigger. Keeping this logic here
+(instead of duplicated inline in the notebook) means the exact same resize /
+normalize / augmentation steps are applied at train time, inference time, and
+retrain time.
+"""
+
 import shutil
 import pathlib
 from typing import List, Tuple
 
 import tensorflow as tf
 from sklearn.model_selection import train_test_split
+
 IMG_SIZE: Tuple[int, int] = (224, 224)
+
+# IMPORTANT: this order must match what tf.keras.utils.image_dataset_from_directory
+# assigns internally, which is always alphabetical by subfolder name — NOT whatever
+# order you list classes in. Getting this wrong silently misaligns class_weight
+# indices during training and target_names during evaluation (both index into the
+# same 0..3 integer label space TF assigns alphabetically). Verified against
+# ds.class_names at the time of writing.
 CLASSES: List[str] = [
     "Cercospora_Gray_Leaf_Spot",
     "Common_Rust",
@@ -12,6 +31,8 @@ CLASSES: List[str] = [
     "Northern_Leaf_Blight",
 ]
 
+# Augmentation pipeline — training time only. Mirrors the block explored in
+# notebook/maize_leaf_disease.ipynb, section 3.
 data_augmentation = tf.keras.Sequential(
     [
         tf.keras.layers.RandomFlip("horizontal"),
