@@ -3,8 +3,8 @@ import pathlib
 from typing import List, Tuple
 
 import tensorflow as tf
-from sklearn.model_selection import train_test_splitIM
-IMG_SIZE: Tuple[int, int] = (128, 128)
+from sklearn.model_selection import train_test_split
+IMG_SIZE: Tuple[int, int] = (224, 224)
 CLASSES: List[str] = [
     "Cercospora_Gray_Leaf_Spot",
     "Common_Rust",
