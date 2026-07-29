@@ -63,7 +63,7 @@ def invalidate_model_cache():
 # ---------------------------------------------------------------------------
 with st.sidebar:
     st.markdown("## 🌽 Maize Scout")
-    st.caption("Andiza Field Diagnostics — Streamlit Edition")
+    st.caption("Field Diagnostics Center")
 
     model_path = MODELS_DIR / "best_model.keras"
     model_present = model_path.exists()
@@ -78,20 +78,13 @@ with st.sidebar:
         st.metric("Test accuracy", f"{metrics.get('test_accuracy', 0)*100:.1f}%")
         if metrics.get("macro_auc"):
             st.metric("Macro ROC-AUC", f"{metrics['macro_auc']:.3f}")
-        if metrics.get("retrained_at"):
-            st.write(
-                "**Last retrained:**",
-                datetime.fromtimestamp(metrics["retrained_at"]).strftime("%Y-%m-%d %H:%M"),
-            )
+        
     else:
         st.warning("No evaluation metrics recorded yet.")
 
     st.divider()
     st.caption(
-        "Unlike a long-running API server, Streamlit apps don't have a single "
-        "persistent 'uptime' the way a REST API does — this session started "
-        f"{session_uptime:.0f}s ago. The model's own production metrics "
-        "(accuracy, last retrained) are the more meaningful health signal here."
+        "The model's own production metrics are the more meaningful health signal here."
     )
 
 tab_overview, tab_diagnose, tab_retrain = st.tabs(
