@@ -1,18 +1,3 @@
-"""
-locustfile.py
-Maize Leaf Disease Classifier — load testing script for the API.
-
-Simulates a flood of prediction requests against the API. Run with:
-
-    locust -f locustfile.py --host http://localhost:8000
-
-or headless (used for the report's results):
-
-    locust -f locustfile.py --host http://localhost:8000 \
-        --users 20 --spawn-rate 5 --run-time 60s --headless \
-        --csv results/1worker
-"""
-
 import pathlib
 import random
 
