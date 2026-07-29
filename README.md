@@ -9,20 +9,23 @@ one of four classes — `Healthy`, `Common_Rust`, `Northern_Leaf_Blight`,
 `Cercospora_Gray_Leaf_Spot`. This extends my earlier tabular crop-yield-prediction project into image data, covering the full cycle: data acquisition, preprocessing, model training, evaluation, a retraining pipeline with an automatic trigger, a FastAPI service, a monitoring/diagnosis dashboard, cloud deployment, and load testing.
 
 - **Video demo:** _add your YouTube link here_
-- **Live API + dashboard:** https://maize-leaf-disease-api-5aqm.onrender.com/
+- **Live app:** https://maize-disease-indetifier.streamlit.app/
 - **Flood/load test results:** see `LOCUST_RESULTS.md` The summary is below
 
 ## Project structure
 
-```
 crop_disease_indetifier/
-├── README.md                 
-├── DEPLOYMENT.md            
-├── LOCUST_RESULTS.md          
+├── README.md                  
+├── STREAMLIT_DEPLOYMENT.md     
+├── DEPLOYMENT.md              
+├── LOCUST_RESULTS.md            
 ├── locustfile.py               
-├── Dockerfile
+├── streamlit_app.py              
+├── .streamlit/
+│   └── config.toml               
+├── Dockerfile                    
 ├── .dockerignore
-├── render.yaml                
+├── render.yaml
 ├── requirements.txt
 │
 ├── notebook/
@@ -30,8 +33,8 @@ crop_disease_indetifier/
 │
 ├── src/
 │   ├── preprocessing.py       
-│   ├── model.py                
-│   ├── prediction.py          
+│   ├── model.py               
+│   ├── prediction.py           
 │   └── retrain.py              
 │
 ├── api/
@@ -49,14 +52,7 @@ crop_disease_indetifier/
 └── models/
     ├── best_model.keras         
     ├── test_eval_summary.json   
-    └── retrain_state.json       
-```
-
-### What's committed to git vs. generated locally
-
-`data/raw/`, `data/train/`, `data/val/`, `data/test/` are **not** committed (large,
-regenerable). Everything else is, including `models/best_model.keras`, since the API
-and the Docker image both need it at build time.
+    └── retrain_state.json      
 
 ## Setup
 
