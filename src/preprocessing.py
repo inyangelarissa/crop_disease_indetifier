@@ -81,7 +81,7 @@ def split_raw_dataset(
 def make_dataset(
     directory: pathlib.Path,
     shuffle: bool,
-    batch_size: int = 32,
+    batch_size: int = 8,
     image_size: Tuple[int, int] = IMG_SIZE,
 ) -> tf.data.Dataset:
     """
